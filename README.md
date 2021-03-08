@@ -1,4 +1,4 @@
-# Java Database GUI
+# Java GUI for Database
 **Java application created with JavaFX 11 and JDBC for CRUD database operations**
 
 The application is written in Java and FXML with JavaFX SDK and can connect to any database.  

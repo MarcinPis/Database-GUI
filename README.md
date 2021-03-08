@@ -1,41 +1,30 @@
-# ExposureCalc
-**Cross-platform tool for converting camera's exposure parameters**
+# Database GUI
+**Java application created with JavaFX 11 and JDBC for CRUD database operations**
 
-The application is written in C++ and QML with Qt framework. This allows to deploy on multiple systems including: Windows, macOS, Android and iOS.
-Application is translated into English and Polish. 
+The application is written in Java and FXML with JavaFX SDK and can connect to any database.  
 
-![Main Screen](screenshots/macOS_mainpage.png "App main screen") ![Settings Screen](screenshots/macOS_settings.png "App settings screen")
+![Database Diagram](screenshots/databaseDiagram.png "Database diagram")
+
+![Main Screen](screenshots/mainWindow.png "App main screen")
+![Main Screen](screenshots/newWindow.png "App main screen") 
+![Main Screen](screenshots/editWindow.png "App main screen") 
+![Main Screen](screenshots/deleteWindow.png "App main screen") 
 
 ## Motivation
-The goal was to create a cross-platform app using only one source code with as little as possible code modifications, learning Qt framework in the process.
+The goal was to create a simple GUI interface for database CRUD operations.
 
 ## Built with
-* [Qt 5.9.5](https://www.qt.io/) - The cross-platform software development framework
+* [JavaFX](https://openjfx.io/) - The open source framework for GUI creation in Java.
 
-## Release
-There are ready to use binaries for below platforms:
-* [Windows](https://github.com/MarcinPis/ExposureCalc/releases/tag/v1.0.0) – compiled on Windows 10 with MinGW 5.3.0. Tested on Windows 10 and Windows 8.1 64 bits systems.
-* [macOS](https://github.com/MarcinPis/ExposureCalc/releases/tag/v1.0.0) – compiled on macOS High Sierra (10.13) with Clang. Tested on macOS High Sierra (10.13) system.
-* [Android armeabi-v7a](https://github.com/MarcinPis/ExposureCalc/releases/tag/v1.0.0) – compiled on Windows 10 with GCC 4.9. Minimum system requirement is Android 4.1 (API 16). Tested on Android 4.3 and 7.0 systems.
+## Dependencies
+**Java:**
+* [Amazon Correto 11](https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html) - Open Java Delevopment Kit certified as compatible with the Java SE standard and used internally at Amazon.
 
-Due to Apple restrictions there is no build on iOS device. This can be achieved by building from source.
+**JavaFX**
+* [JavaFX 11](https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html) - Long term support JavaFX by Gluon.
 
-## Deployment
-The code is prepared for Windows, MacOS, Android and iOS platforms. 
-
-To be able to build the app from the source Qt 5.9.5 or later is needed as well as below packages:
-
-**To build for Windows:**
-* C++ compiler with C++ 14 support – MinGW 5.3.0 or MS Visual C++ Compiler 14.0 or later.
-
-**To build for Android:**
-* Java SE Development Kit 8 (JDK),
-* Android SDK,
-* Android NDK.
-
-**To build for MacOS/iOS:**
-* The newest version of Xcode,
-* Clang C++ compiler.
+**JDBC**
+* [MS SQL Server](https://docs.microsoft.com/en-us/sql/connect/jdbc/download-microsoft-jdbc-driver-for-sql-server?view=sql-server-ver15) -  Microsoft JDBC database driver to connect to MS SQL Server.
 
 ## Author
 Marcin Pisarski

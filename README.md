@@ -21,9 +21,11 @@ The goal was to create a simple GUI interface for database CRUD operations.
 
 ## Screenshots
 **Database diagram**
+
 ![Database Diagram](screenshots/databaseDiagram.png "Database diagram")
 
 **Application screenshots**
+
 ![Main Screen](screenshots/mainWindow.png "App main screen")
 ![Main Screen](screenshots/newWindow.png "App main screen") 
 ![Main Screen](screenshots/editWindow.png "App main screen") 

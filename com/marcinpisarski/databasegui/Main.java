@@ -14,9 +14,6 @@ public class Main extends Application {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("view/mainWindow.fxml"));
         Parent root = loader.load();
 
-        //Controller controller = loader.getController();
-        //controller.handleClickEmployeesTable();
-
         primaryStage.setTitle("Database GUI");
         primaryStage.setScene(new Scene(root, 700, 600));
         primaryStage.getScene().getStylesheets().add(getClass().getResource("view/style.css").toExternalForm());

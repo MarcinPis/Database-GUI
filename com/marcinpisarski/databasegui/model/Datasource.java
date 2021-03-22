@@ -1,18 +1,27 @@
 package com.marcinpisarski.databasegui.model;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 public class Datasource {
 
-    // Connection string
-    public static final String DB_ADDRESS = "jdbc:sqlserver://localhost;";
-    public static final String DB_NAME = "databaseName=HR;";
-    public static final String DB_SECURITY = "integratedSecurity=true;";
-    public static final String CONNECTION_STRING = DB_ADDRESS + DB_NAME + DB_SECURITY;
+    // Azure instance of SQL Server Connection string
+    public static final String AZURE_DB_ADDRESS = "jdbc:sqlserver://.database.windows.net:1433;";
+    public static final String AZURE_DB_NAME = "database=;";
+    public static final String AZURE_USERNAME = "user=;";
+    public static final String AZURE_USERNAME_PASSWORD = "password=;";
+    public static final String AZURE_DB_SECURITY = "encrypt=true;trustServerCertificate=false;hostNameInCertificate=*.database.windows.net;loginTimeout=30;";
+    public static final String AZURE_CONNECTION_STRING = AZURE_DB_ADDRESS + AZURE_DB_NAME + AZURE_USERNAME + AZURE_USERNAME_PASSWORD + AZURE_DB_SECURITY;
+
+    // Local instance of SQL Server Connection string
+    public static final String LOCAL_DB_ADDRESS = "jdbc:sqlserver://localhost;";
+    public static final String LOCAL_DB_NAME = "databaseName=HR;";
+    public static final String LOCAL_DB_SECURITY = "integratedSecurity=true;";
+    public static final String LOCAL_CONNECTION_STRING = LOCAL_DB_ADDRESS + LOCAL_DB_NAME + LOCAL_DB_SECURITY;
 
     // SQL tables and columns
     public static final String TABLE_EMPLOYEES = "Employees";
@@ -86,16 +95,16 @@ public class Datasource {
     private Datasource() {
     }
 
-    private static Datasource instance = new Datasource();
+    private static final Datasource instance = new Datasource();
 
     public static Datasource getInstance() {
-        return instance;
-        // Datasource.getInstance().methodName();
+        return instance; // Datasource.getInstance().methodName();
     }
 
     public boolean open() {
         try {
-            conn = DriverManager.getConnection(CONNECTION_STRING);
+            conn = DriverManager.getConnection(LOCAL_CONNECTION_STRING);
+            //conn = DriverManager.getConnection(AZURE_CONNECTION_STRING);
 
             insertIntoEmployees = conn.prepareStatement(INSERT_EMPLOYEE, Statement.RETURN_GENERATED_KEYS);
             deleteFromEmployees = conn.prepareStatement(DELETE_EMPLOYEE);
@@ -183,19 +192,21 @@ public class Datasource {
         }
     }
 
-    public List<Employee> queryEmployees() {
+    public ObservableList<EmployeeTableRow> queryEmployees() {
+
         try {
             ResultSet results = selectEmployees.executeQuery();
-            List<Employee> employees = new ArrayList<>();
+            ObservableList<EmployeeTableRow> employees = FXCollections.observableArrayList();
             while(results.next()) {
-                Employee employee = new Employee();
-                employee.setId(results.getInt("empID"));
+                EmployeeTableRow employee = new EmployeeTableRow();
+                employee.setEmployeeId(results.getInt("empID"));
                 employee.setFirstName(results.getString("FIRSTNAME"));
                 employee.setLastName(results.getString("LASTNAME"));
 
                 employee.setDepartmentId(results.getInt("DEPARTMENT_ID"));
                 employee.setDepartmentName(results.getString("DepartmentName"));
 
+                employee.setGroups(queryEmployeesMailing(employee.getEmployeeId()));
                 employees.add(employee);
             }
 
@@ -210,7 +221,7 @@ public class Datasource {
     public List<Group> queryGroups() {
         try {
             ResultSet results = selectGroups.executeQuery();
-            List<Group> groups = new ArrayList<Group>();
+            List<Group> groups = new ArrayList<>();
             while (results.next()) {
                 Group group = new Group();
                 group.setId(results.getInt(1));
@@ -228,7 +239,7 @@ public class Datasource {
     public List<Department> queryDepartments() {
         try {
             ResultSet results = selectDepartments.executeQuery();
-            List<Department> departments = new ArrayList<Department>();
+            List<Department> departments = new ArrayList<>();
             while (results.next()) {
                 Department department = new Department();
                 department.setId(results.getInt(1));
@@ -243,13 +254,13 @@ public class Datasource {
         }
     }
 
-    public List<Group> queryEmployeesMailing(int employeeId) {
+    public ObservableList<Group> queryEmployeesMailing(int employeeId) {
 
         try {
             selectEmployeeMailing.setInt(1, employeeId);
             ResultSet results = selectEmployeeMailing.executeQuery();
 
-            List<Group> groups = new ArrayList<>();
+            ObservableList<Group> groups = FXCollections.observableArrayList();
             while (results.next()) {
                 Group group = new Group();
                 group.setId(results.getInt(1));
@@ -287,10 +298,7 @@ public class Datasource {
 
             int employeeInsertedId = generatedKeys.getInt(1);
 
-            //insertEmployeesMailing(employeeInsertedId, groupId);
-
-            for (Iterator<Group> iterator = groups.iterator(); iterator.hasNext();) {
-                Group group = (Group) iterator.next();
+            for (Group group : groups) {
                 insertIntoEmployeeMailing.setInt(1, employeeInsertedId);
                 insertIntoEmployeeMailing.setInt(2, group.getId());
 
@@ -299,8 +307,7 @@ public class Datasource {
             }
 
             // Execute the batch
-            int [] insertCounts = insertIntoEmployeeMailing.executeBatch();
-            System.out.println(Arrays.toString(insertCounts));
+            insertIntoEmployeeMailing.executeBatch();
 
             // If all good commit the changes
             conn.commit();
@@ -315,7 +322,6 @@ public class Datasource {
             }
         } finally {
             try {
-                System.out.println("Resetting default commit behavior");
                 conn.setAutoCommit(true);
             } catch (SQLException e) {
                 System.out.println("Couldn't reset auto commit" + e.getMessage());
@@ -341,8 +347,7 @@ public class Datasource {
             deleteEmployeesMailing(employeeId);
 
             // Insert employees new mailing groups
-            for (Iterator<Group> iterator = groups.iterator(); iterator.hasNext();) {
-                Group group = (Group) iterator.next();
+            for (Group group : groups) {
                 insertIntoEmployeeMailing.setInt(1, employeeId);
                 insertIntoEmployeeMailing.setInt(2, group.getId());
 
@@ -351,8 +356,7 @@ public class Datasource {
             }
 
             // Execute the batch
-            int [] insertCounts = insertIntoEmployeeMailing.executeBatch();
-            System.out.println(Arrays.toString(insertCounts));
+            insertIntoEmployeeMailing.executeBatch();
 
             // If all good commit the changes
             conn.commit();
@@ -367,7 +371,6 @@ public class Datasource {
             }
         } finally {
             try {
-                System.out.println("Resetting default commit behavior");
                 conn.setAutoCommit(true);
             } catch (SQLException e) {
                 System.out.println("Couldn't reset auto commit" + e.getMessage());
@@ -375,17 +378,88 @@ public class Datasource {
         }
     }
 
-    public void deleteEmployee(Employee employee) {
+    public void updateEmployee(String firstName, String lastName, int employeeId, int departmentId) {
+        try {
+            conn.setAutoCommit(false);
+            updateEmployees.setString(1, firstName);
+            updateEmployees.setString(2, lastName);
+            updateEmployees.setInt(3, departmentId);
+            updateEmployees.setInt(4, employeeId);
 
+            int affectedRows = updateEmployees.executeUpdate();
+            if (affectedRows != 1) {
+                throw new SQLException("Couldn't insert Employee");
+            }
+
+            // If all good commit the changes
+            conn.commit();
+
+        } catch (Exception e) {
+            System.out.println("Update Employee exception: " + e.getMessage());
+            try {
+                System.out.println("Rollback operation");
+                conn.rollback();
+            } catch (SQLException e2) {
+                System.out.println("Rollback error: " + e2.getMessage());
+            }
+        } finally {
+            try {
+                conn.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.out.println("Couldn't reset auto commit" + e.getMessage());
+            }
+        }
+    }
+
+    public void updateEmployee(int employeeId, List<Group> groups) {
         try {
             conn.setAutoCommit(false);
 
-            deleteFromEmployeeMailing.setInt(1, employee.getId());
+            // Delete employees mailing groups
+            deleteEmployeesMailing(employeeId);
+
+            // Insert employees new mailing groups
+            for (Group group : groups) {
+                insertIntoEmployeeMailing.setInt(1, employeeId);
+                insertIntoEmployeeMailing.setInt(2, group.getId());
+
+                // Add to batch
+                insertIntoEmployeeMailing.addBatch();
+            }
+
+            // Execute the batch
+            //            int [] insertCounts = insertIntoEmployeeMailing.executeBatch();
+            insertIntoEmployeeMailing.executeBatch();
+
+            // If all good commit the changes
+            conn.commit();
+
+        } catch (Exception e) {
+            System.out.println("Update Employee exception: " + e.getMessage());
+            try {
+                System.out.println("Rollback operation");
+                conn.rollback();
+            } catch (SQLException e2) {
+                System.out.println("Rollback error: " + e2.getMessage());
+            }
+        } finally {
+            try {
+                conn.setAutoCommit(true);
+            } catch (SQLException e) {
+                System.out.println("Couldn't reset auto commit" + e.getMessage());
+            }
+        }
+    }
+
+    public void deleteEmployee(int employeeId) {
+        try {
+            conn.setAutoCommit(false);
+
+            deleteFromEmployeeMailing.setInt(1, employeeId);
             deleteFromEmployeeMailing.execute();
-            //deleteEmployeesMailing(employee.getId());
 
             // Try delete Employee
-            deleteFromEmployees.setInt(1, employee.getId());
+            deleteFromEmployees.setInt(1, employeeId);
 
             int affectedRows = deleteFromEmployees.executeUpdate();
             if (affectedRows != 1) {
@@ -405,7 +479,6 @@ public class Datasource {
             }
         } finally {
             try {
-                System.out.println("Resetting default commit behavior");
                 conn.setAutoCommit(true);
             } catch (SQLException e) {
                 System.out.println("Couldn't reset auto commit" + e.getMessage());
@@ -420,18 +493,6 @@ public class Datasource {
             deleteFromEmployeeMailing.execute();
         } catch (SQLException e) {
             throw new SQLException("Couldn't delete Employee from mailing groups: " + e.getMessage());
-        }
-    }
-
-    private void insertEmployeesMailing(int employeeId, int groupId) throws SQLException {
-
-        insertIntoEmployeeMailing.setInt(1, employeeId);
-        insertIntoEmployeeMailing.setInt(2, groupId);
-
-        int affectedRows = insertIntoEmployeeMailing.executeUpdate();
-
-        if (affectedRows != 1) {
-            throw new SQLException("Couldn't insert Employee Mailing");
         }
     }
 }

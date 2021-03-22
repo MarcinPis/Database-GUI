@@ -1,31 +1,24 @@
 package com.marcinpisarski.databasegui;
 
-import com.marcinpisarski.databasegui.model.Department;
-import com.marcinpisarski.databasegui.model.Group;
+import com.marcinpisarski.databasegui.model.*;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
-import com.marcinpisarski.databasegui.model.Datasource;
-import com.marcinpisarski.databasegui.model.Employee;
 
 import java.util.Optional;
 
 public class Controller {
 
     @FXML
-    private TableView<Employee> employeeTable;
+    private TableView<EmployeeTableRow> employeeTable;
     @FXML
     private TableView<Group> groupsTable;
     @FXML
     private BorderPane mainBorderPane;
-
 
     public void initialize() {
         listEmployees();
@@ -35,28 +28,18 @@ public class Controller {
 
     public void listEmployees() {
         employeeTable.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        employeeTable.getItems().setAll(Datasource.getInstance().queryEmployees());
+        employeeTable.setItems(Datasource.getInstance().queryEmployees());
         employeeTable.requestFocus();
     }
 
     @FXML
     public void handleClickEmployeesTable() {
-        employeeTable.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<Employee>() {
+        employeeTable.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<EmployeeTableRow>() {
             @Override
-            public void changed(ObservableValue<? extends Employee> observable, Employee oldValue, Employee newValue) {
+            public void changed(ObservableValue<? extends EmployeeTableRow> observable, EmployeeTableRow oldValue, EmployeeTableRow newValue) {
                 if (newValue != null) {
-                    Employee employee = employeeTable.getSelectionModel().getSelectedItem();
-
-                    Task<ObservableList<Group>> task = new Task<ObservableList<Group>>() {
-                        @Override
-                        protected ObservableList<Group> call() throws Exception {
-                            return FXCollections.observableArrayList(
-                                    Datasource.getInstance().queryEmployeesMailing(employee.getId()));
-                        }
-                    };
-                    groupsTable.itemsProperty().bind(task.valueProperty());
-
-                    new Thread(task).start();
+                    EmployeeTableRow employee = employeeTable.getSelectionModel().getSelectedItem();
+                    groupsTable.setItems(employee.getGroups());
                 }
             }
         });
@@ -98,7 +81,6 @@ public class Controller {
         );
 
         Optional<ButtonType> result = dialog.showAndWait();
-
         if (result.isPresent() && result.get() == ButtonType.OK) {
             controller.insertRecord();
 
@@ -109,16 +91,10 @@ public class Controller {
 
     @FXML
     public void editEmployeeDialog() {
-
-        final Employee employee = employeeTable.getSelectionModel().getSelectedItem();
-        if (employee == null) {
-            // Nothing was selected
+        final EmployeeTableRow employeeTableRow = employeeTable.getSelectionModel().getSelectedItem();
+        if (employeeTableRow == null) {
             return;
         }
-
-        Department department = new Department();
-        department.setId(employee.getDepartmentId());
-        department.setName(employee.getDepartmentName());
 
         Dialog<ButtonType> dialog = new Dialog<>();
         dialog.initOwner(mainBorderPane.getScene().getWindow());
@@ -136,7 +112,7 @@ public class Controller {
         }
 
         DialogController controller = fxmlLoader.getController();
-        controller.dialogInitialize(employee, department);
+        controller.updateEmployeeInitialize(employeeTableRow);
 
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         final Button btOk = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
@@ -154,32 +130,28 @@ public class Controller {
 
         Optional<ButtonType> result = dialog.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            controller.updateRecord(employee);
+            controller.updateRecord(employeeTableRow);
 
             listEmployees();
-            employeeTable.getSelectionModel().select(employee);
+            employeeTable.getSelectionModel().select(employeeTableRow);
         }
     }
 
     @FXML
     public void deleteEmployee() {
-
-        final Employee employee = employeeTable.getSelectionModel().getSelectedItem();
-        if (employee == null) {
-            // Nothing was selected
+        final EmployeeTableRow employeeTableRow = employeeTable.getSelectionModel().getSelectedItem();
+        if (employeeTableRow == null) {
             return;
         }
 
         Alert alert = new Alert((Alert.AlertType.CONFIRMATION));
         alert.setTitle("Delete Employee");
-        alert.setHeaderText("Do you really want to delete employee: " + employee.getFirstName() + " " + employee.getLastName() + "?");
+        alert.setHeaderText("Do you really want to delete employee: " + employeeTableRow.getFirstName() + " " + employeeTableRow.getLastName() + "?");
 
         Optional<ButtonType> result = alert.showAndWait();
-
         if (result.isPresent() && (result.get() == ButtonType.OK)) {
-            // Delete
-            Datasource.getInstance().deleteEmployee(employee);
 
+            Datasource.getInstance().deleteEmployee(employeeTableRow.getEmployeeId());
             listEmployees();
             employeeTable.getSelectionModel().selectFirst();
         }

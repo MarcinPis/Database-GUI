@@ -22,7 +22,7 @@
             <columns>
                 <TableColumn prefWidth="50" text="ID">
                     <cellValueFactory>
-                        <PropertyValueFactory property="id"/>
+                        <PropertyValueFactory property="employeeId"/>
                     </cellValueFactory>
                 </TableColumn>
                 <TableColumn prefWidth="150" text="First Name">

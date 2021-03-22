@@ -1,17 +1,14 @@
 package com.marcinpisarski.databasegui;
 
-import com.marcinpisarski.databasegui.model.Department;
-import com.marcinpisarski.databasegui.model.Group;
+import com.marcinpisarski.databasegui.model.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.util.StringConverter;
-import com.marcinpisarski.databasegui.model.Datasource;
-import com.marcinpisarski.databasegui.model.Employee;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 public class DialogController {
@@ -29,8 +26,8 @@ public class DialogController {
     private ComboBox<Department> departmentSelector;
 
     public void initialize() {
-        loadListViewContent();
-        loadComboBoxContent();
+        loadGroupsListViewContent();
+        loadDepartmentsComboBoxContent();
     }
 
     public boolean isInputValid() {
@@ -44,34 +41,27 @@ public class DialogController {
         }
     }
 
-    public void dialogInitialize(Employee employee, Department department) {
-        firstNameField.setText(employee.getFirstName());
-        lastNameField.setText(employee.getLastName());
+    public void updateEmployeeInitialize(EmployeeTableRow employeeTableRow) {
+        firstNameField.setText(employeeTableRow.getFirstName());
+        lastNameField.setText(employeeTableRow.getLastName());
+
+        Department department = new Department();
+        department.setId(employeeTableRow.getDepartmentId());
+        department.setName(employeeTableRow.getDepartmentName());
         departmentSelector.setValue(department);
 
-        ObservableList<Group> groupsList = FXCollections.observableArrayList(Datasource.getInstance().queryGroups());
-        mailingGroupsList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        mailingGroupsList.itemsProperty().setValue(groupsList);
-
-        List<Group> employeeGroups = new ArrayList<>();
-        employeeGroups = Datasource.getInstance().queryEmployeesMailing(employee.getId());
-
-        for (Iterator<Group> iterator = employeeGroups.iterator(); iterator.hasNext();) {
-            Group group = (Group) iterator.next();
+        List<Group> employeeGroups = employeeTableRow.getGroups();
+        for (Group group : employeeGroups) {
             mailingGroupsList.getSelectionModel().select(group);
         }
     }
 
-    public void loadListViewContent() {
+    public void loadGroupsListViewContent() {
         ObservableList<Group> groupsList = FXCollections.observableArrayList(Datasource.getInstance().queryGroups());
         mailingGroupsList.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         mailingGroupsList.itemsProperty().setValue(groupsList);
 
-        convertListViewDisplay();
-    }
-
-    private void convertListViewDisplay() {
-        mailingGroupsList.setCellFactory(groupListView -> new ListCell<Group>() {
+        mailingGroupsList.setCellFactory(groupListView -> new ListCell<>() {
             @Override
             protected void updateItem(Group item, boolean empty) {
                 super.updateItem(item, empty);
@@ -80,16 +70,12 @@ public class DialogController {
         });
     }
 
-    public void loadComboBoxContent() {
-        ObservableList<Department> groupsList = FXCollections.observableArrayList(Datasource.getInstance().queryDepartments());
-        departmentSelector.itemsProperty().setValue(groupsList);
+    public void loadDepartmentsComboBoxContent() {
+        ObservableList<Department> departments = FXCollections.observableArrayList(Datasource.getInstance().queryDepartments());
+        departmentSelector.itemsProperty().setValue(departments);
         departmentSelector.getSelectionModel().select(0);
 
-        convertComboDisplayList();
-    }
-
-    private void convertComboDisplayList() {
-        departmentSelector.setConverter(new StringConverter<Department>() {
+        departmentSelector.setConverter(new StringConverter<>() {
             @Override
             public String toString(Department dept) {
                 if (dept == null) {
@@ -99,8 +85,11 @@ public class DialogController {
             }
 
             @Override
-            public Department fromString(String string) {
-                return departmentSelector.getItems().stream().filter(gr -> gr.getName().equals(string)).findFirst().orElse(null);
+            public Department fromString(String name) {
+                return departmentSelector.getItems().stream()
+                                                    .filter(d -> d.getName().equals(name))
+                                                    .findFirst()
+                                                    .orElse(null);
             }
         });
     }
@@ -108,33 +97,44 @@ public class DialogController {
     public void insertRecord() {
         String firstName = firstNameField.getText().trim();
         String lastName = lastNameField.getText().trim();
-
         int departmentId = departmentSelector.getValue().getId();
-
         List<Group> selectedGroups = mailingGroupsList.getSelectionModel().getSelectedItems();
 
         Datasource.getInstance().insertEmployee(firstName, lastName, departmentId, selectedGroups);
     }
 
-    public void updateRecord(Employee employee) {
+    public void updateRecord(EmployeeTableRow employeeTableRow) {
+        Comparator<Group> groupsSorter = (g1, g2) -> g1.getId() - g2.getId();
+        int employeeId = employeeTableRow.getEmployeeId();
+
         String newFirstName = firstNameField.getText().trim();
         String newLastName = lastNameField.getText().trim();
-        String oldFirstName = employee.getFirstName();
-        String oldLastName = employee.getLastName();
+        int newDepartmentId = departmentSelector.getValue().getId();
+        List<Group> newGroups = mailingGroupsList.getSelectionModel().getSelectedItems().stream()
+                                                                                        .sorted(groupsSorter)
+                                                                                        .collect(Collectors.toList());
 
-        if ( (oldFirstName.equals(newFirstName)) && (oldLastName.equals(newLastName)) ) {
-            System.out.println("First name and last name did not change");
-        } else {
-            System.out.println("Name has changed");
+        String oldFirstName = employeeTableRow.getFirstName();
+        String oldLastName = employeeTableRow.getLastName();
+        int oldDepartmentId = employeeTableRow.getDepartmentId();
+        List<Group> oldGroups = employeeTableRow.getGroups().stream()
+                                                            .sorted(groupsSorter)
+                                                            .collect(Collectors.toList());
+
+        boolean groupsEqual = newGroups.equals(oldGroups);
+
+        if ( (oldFirstName.equals(newFirstName) || oldLastName.equals(newLastName) || (oldDepartmentId == newDepartmentId)) && !groupsEqual) {
+            Datasource.getInstance().updateEmployee(newFirstName, newLastName, employeeId, newDepartmentId, newGroups);
+            return;
         }
 
-        int employeeId = employee.getId();
-
-        Department selectedDepartment = departmentSelector.getValue();
-        int departmentId = selectedDepartment.getId();
-
-        List<Group> selectedGroups = mailingGroupsList.getSelectionModel().getSelectedItems();
-
-        Datasource.getInstance().updateEmployee(newFirstName, newLastName, employeeId, departmentId, selectedGroups);
+        if (!groupsEqual) {
+            Datasource.getInstance().updateEmployee(employeeId, newGroups);
+            return;
+        }
+        if ( !(oldFirstName.equals(newFirstName) && oldLastName.equals(newLastName) && (oldDepartmentId == newDepartmentId)) ) {
+            Datasource.getInstance().updateEmployee(newFirstName, newLastName, employeeId, newDepartmentId);
+            return;
+        }
     }
 }

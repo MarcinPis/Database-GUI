@@ -50,8 +50,10 @@ public class Datasource {
             " SET " + EMPLOYEES_COLUMN_FIRST_NAME + " = ? , " + EMPLOYEES_COLUMN_LAST_NAME + " = ? ," +
             EMPLOYEES_COLUMN_DEPARTMENT_ID + " = ? " + " WHERE ID = ?";
     public static final String DELETE_EMPLOYEE = "DELETE FROM " + TABLE_EMPLOYEES + " WHERE " + EMPLOYEES_COLUMN_ID + " = ?";
-    public static final String SELECT_EMPLOYEES = "SELECT e.ID As empID, e.FIRSTNAME, e.LASTNAME, e.DEPARTMENT_ID, d.NAME as DepartmentName FROM Employees e LEFT JOIN Departments d" +
-            " ON e.DEPARTMENT_ID = d.ID";
+    public static final String SELECT_EMPLOYEES = "SELECT e." + EMPLOYEES_COLUMN_ID + " As empID, e." +
+            EMPLOYEES_COLUMN_FIRST_NAME + ", e." + EMPLOYEES_COLUMN_LAST_NAME + ", e." + EMPLOYEES_COLUMN_DEPARTMENT_ID +
+            ", d." + DEPARTMENTS_COLUMN_NAME + " as DepartmentName FROM " + TABLE_EMPLOYEES + " e LEFT JOIN " +
+            TABLE_DEPARTMENTS + " d ON e." + EMPLOYEES_COLUMN_DEPARTMENT_ID + " = d." + DEPARTMENTS_COLUMN_ID;
 
     public static final String INSERT_DEPARTMENT = "INSERT INTO " + TABLE_DEPARTMENTS + "(" + DEPARTMENTS_COLUMN_NAME +
             ") VALUES(?)";

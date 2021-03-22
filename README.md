@@ -1,14 +1,7 @@
-# Database GUI
+# Java GUI for Database
 **Java application created with JavaFX 11 and JDBC for CRUD database operations**
 
 The application is written in Java and FXML with JavaFX SDK and can connect to any database.  
-
-![Database Diagram](screenshots/databaseDiagram.png "Database diagram")
-
-![Main Screen](screenshots/mainWindow.png "App main screen")
-![Main Screen](screenshots/newWindow.png "App main screen") 
-![Main Screen](screenshots/editWindow.png "App main screen") 
-![Main Screen](screenshots/deleteWindow.png "App main screen") 
 
 ## Motivation
 The goal was to create a simple GUI interface for database CRUD operations.
@@ -25,6 +18,18 @@ The goal was to create a simple GUI interface for database CRUD operations.
 
 **JDBC**
 * [MS SQL Server](https://docs.microsoft.com/en-us/sql/connect/jdbc/download-microsoft-jdbc-driver-for-sql-server?view=sql-server-ver15) -  Microsoft JDBC database driver to connect to MS SQL Server.
+
+## Screenshots
+**Database diagram**
+
+![Database Diagram](screenshots/databaseDiagram.png "Database diagram")
+
+**Application screenshots**
+
+![Main Screen](screenshots/mainWindow.png "App main screen")
+![Main Screen](screenshots/newWindow.png "App main screen") 
+![Main Screen](screenshots/editWindow.png "App main screen") 
+![Main Screen](screenshots/deleteWindow.png "App main screen") 
 
 ## Author
 Marcin Pisarski
